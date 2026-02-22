@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
     Search, MapPin, Briefcase, Clock, Star, ChevronRight,
     Bell, User, TrendingUp, Award, Zap, Menu, X, Filter,
-    Building2, Money, Calendar, ExternalLink, Bookmark
+    Building2, DollarSign, Calendar, ExternalLink, Bookmark
 } from 'lucide-react';
 import { SkeuButton, SkeuCard, SkeuInput, SkeuBadge } from '@/components/ui/skeuomorphic';
 import { useJobsStore, useAuthStore, useUIStore } from '@/store';
@@ -292,8 +292,8 @@ export default function HomePage() {
                                 <button
                                     key={type}
                                     className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${selectedJobType === type
-                                            ? 'bg-primary-500 text-white shadow-skeu-badge'
-                                            : 'bg-skeu-cream text-skeu-brown hover:bg-skeu-tan'
+                                        ? 'bg-primary-500 text-white shadow-skeu-badge'
+                                        : 'bg-skeu-cream text-skeu-brown hover:bg-skeu-tan'
                                         }`}
                                     onClick={() => setSelectedJobType(selectedJobType === type ? '' : type)}
                                 >
@@ -452,8 +452,8 @@ function JobCard({ job, isSaved, onToggleSave }: { job: Job; isSaved: boolean; o
                 </div>
                 <button
                     className={`p-2 rounded-lg transition-all ${isSaved
-                            ? 'bg-primary-100 text-primary-600'
-                            : 'hover:bg-skeu-cream text-skeu-brown'
+                        ? 'bg-primary-100 text-primary-600'
+                        : 'hover:bg-skeu-cream text-skeu-brown'
                         }`}
                     onClick={(e) => {
                         e.stopPropagation();
