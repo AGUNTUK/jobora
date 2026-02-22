@@ -4,6 +4,8 @@
 interface AIConfig {
     openrouterApiKey?: string;
     openrouterModel?: string;
+    maxRetries?: number;
+    timeout?: number;
 }
 
 interface JobRankingInput {
@@ -40,18 +42,104 @@ interface AIResponse<T> {
     model?: string;
 }
 
-// OpenRouter API Client
+// Circuit breaker state
+interface CircuitBreakerState {
+    isOpen: boolean;
+    failureCount: number;
+    lastFailureTime: number;
+    nextAttemptTime: number;
+}
+
+/**
+ * Sleep utility for retry delays
+ */
+function sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Calculate exponential backoff delay with jitter
+ */
+function calculateBackoff(attempt: number, baseDelay: number = 1000, maxDelay: number = 30000): number {
+    const exponentialDelay = Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
+    // Add jitter (±25%)
+    const jitter = exponentialDelay * 0.25 * (Math.random() * 2 - 1);
+    return Math.floor(exponentialDelay + jitter);
+}
+
+// OpenRouter API Client with retry logic and circuit breaker
 class OpenRouterClient {
     private apiKey: string;
     private model: string;
     private baseUrl = 'https://openrouter.ai/api/v1/chat/completions';
+    private maxRetries: number;
+    private timeout: number;
+    private circuitBreaker: CircuitBreakerState = {
+        isOpen: false,
+        failureCount: 0,
+        lastFailureTime: 0,
+        nextAttemptTime: 0,
+    };
 
-    constructor(apiKey: string, model: string = 'anthropic/claude-3.5-sonnet') {
+    // Circuit breaker configuration
+    private readonly FAILURE_THRESHOLD = 5;
+    private readonly RECOVERY_TIMEOUT = 60000; // 1 minute
+
+    constructor(
+        apiKey: string,
+        model: string = 'anthropic/claude-3.5-sonnet',
+        maxRetries: number = 3,
+        timeout: number = 30000
+    ) {
         this.apiKey = apiKey;
         this.model = model;
+        this.maxRetries = maxRetries;
+        this.timeout = timeout;
     }
 
-    async chat(
+    /**
+     * Check if circuit breaker should allow request
+     */
+    private checkCircuitBreaker(): boolean {
+        const now = Date.now();
+
+        if (this.circuitBreaker.isOpen) {
+            if (now >= this.circuitBreaker.nextAttemptTime) {
+                // Half-open state - allow one request to test
+                return true;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Record successful request
+     */
+    private recordSuccess(): void {
+        this.circuitBreaker.failureCount = 0;
+        this.circuitBreaker.isOpen = false;
+    }
+
+    /**
+     * Record failed request
+     */
+    private recordFailure(): void {
+        const now = Date.now();
+        this.circuitBreaker.failureCount++;
+        this.circuitBreaker.lastFailureTime = now;
+
+        if (this.circuitBreaker.failureCount >= this.FAILURE_THRESHOLD) {
+            this.circuitBreaker.isOpen = true;
+            this.circuitBreaker.nextAttemptTime = now + this.RECOVERY_TIMEOUT;
+            console.warn('Circuit breaker opened due to repeated failures');
+        }
+    }
+
+    /**
+     * Make a single API request with timeout
+     */
+    private async makeRequest(
         messages: Array<{ role: string; content: string }>,
         options?: {
             temperature?: number;
@@ -59,6 +147,9 @@ class OpenRouterClient {
             model?: string;
         }
     ): Promise<string> {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
         try {
             const response = await fetch(this.baseUrl, {
                 method: 'POST',
@@ -74,18 +165,102 @@ class OpenRouterClient {
                     temperature: options?.temperature ?? 0.7,
                     max_tokens: options?.maxTokens ?? 2000,
                 }),
+                signal: controller.signal,
             });
 
+            clearTimeout(timeoutId);
+
             if (!response.ok) {
-                throw new Error(`OpenRouter API error: ${response.status}`);
+                const errorBody = await response.text().catch(() => 'Unknown error');
+                throw new Error(`OpenRouter API error: ${response.status} - ${errorBody}`);
             }
 
             const data = await response.json();
+
+            if (!data.choices?.[0]?.message?.content) {
+                throw new Error('Invalid response format from OpenRouter API');
+            }
+
             return data.choices[0].message.content;
         } catch (error) {
-            console.error('OpenRouter API error:', error);
+            clearTimeout(timeoutId);
             throw error;
         }
+    }
+
+    /**
+     * Chat with retry logic and circuit breaker
+     */
+    async chat(
+        messages: Array<{ role: string; content: string }>,
+        options?: {
+            temperature?: number;
+            maxTokens?: number;
+            model?: string;
+        }
+    ): Promise<string> {
+        // Check circuit breaker
+        if (!this.checkCircuitBreaker()) {
+            throw new Error('Service temporarily unavailable due to repeated failures. Please try again later.');
+        }
+
+        let lastError: Error | null = null;
+
+        for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+            try {
+                const result = await this.makeRequest(messages, options);
+                this.recordSuccess();
+                return result;
+            } catch (error) {
+                lastError = error instanceof Error ? error : new Error(String(error));
+
+                // Don't retry on certain errors
+                if (lastError.message.includes('401') || lastError.message.includes('403')) {
+                    throw new Error('Authentication failed. Please check your API key.');
+                }
+
+                // Don't retry on abort (timeout)
+                if (lastError.name === 'AbortError') {
+                    lastError = new Error(`Request timed out after ${this.timeout}ms`);
+                }
+
+                console.error(`OpenRouter API attempt ${attempt + 1} failed:`, lastError.message);
+
+                // Record failure for circuit breaker
+                this.recordFailure();
+
+                // Don't wait after last attempt
+                if (attempt < this.maxRetries) {
+                    const delay = calculateBackoff(attempt);
+                    console.log(`Retrying in ${delay}ms...`);
+                    await sleep(delay);
+                }
+            }
+        }
+
+        throw lastError || new Error('Failed to complete AI request after retries');
+    }
+
+    /**
+     * Get circuit breaker status
+     */
+    getCircuitBreakerStatus(): { isOpen: boolean; failureCount: number } {
+        return {
+            isOpen: this.circuitBreaker.isOpen,
+            failureCount: this.circuitBreaker.failureCount,
+        };
+    }
+
+    /**
+     * Reset circuit breaker (useful for testing or manual recovery)
+     */
+    resetCircuitBreaker(): void {
+        this.circuitBreaker = {
+            isOpen: false,
+            failureCount: 0,
+            lastFailureTime: 0,
+            nextAttemptTime: 0,
+        };
     }
 }
 
@@ -97,7 +272,12 @@ export class AIService {
     constructor(config: AIConfig) {
         this.defaultModel = config.openrouterModel || 'anthropic/claude-3.5-sonnet';
         if (config.openrouterApiKey) {
-            this.openrouter = new OpenRouterClient(config.openrouterApiKey, this.defaultModel);
+            this.openrouter = new OpenRouterClient(
+                config.openrouterApiKey,
+                this.defaultModel,
+                config.maxRetries ?? 3,
+                config.timeout ?? 30000
+            );
         }
     }
 
