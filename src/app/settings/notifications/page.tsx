@@ -39,13 +39,16 @@ export default function NotificationSettingsPage() {
     });
 
     const handleToggle = (category: 'email' | 'push', key: string) => {
-        setSettings(prev => ({
-            ...prev,
-            [category]: {
-                ...prev[category],
-                [key]: !prev[category][key as keyof typeof prev.email],
-            },
-        }));
+        setSettings(prev => {
+            const categorySettings = prev[category] as Record<string, boolean>;
+            return {
+                ...prev,
+                [category]: {
+                    ...categorySettings,
+                    [key]: !categorySettings[key],
+                },
+            };
+        });
     };
 
     return (
