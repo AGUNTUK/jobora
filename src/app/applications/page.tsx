@@ -250,8 +250,8 @@ export default function ApplicationsPage() {
                     <button
                         onClick={() => setFilterStatus('all')}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filterStatus === 'all'
-                                ? 'bg-primary-500 text-white'
-                                : 'bg-white text-skeu-brown hover:bg-skeu-cream'
+                            ? 'bg-primary-500 text-white'
+                            : 'bg-white text-skeu-brown hover:bg-skeu-cream'
                             }`}
                     >
                         All ({applications.length})
@@ -264,8 +264,8 @@ export default function ApplicationsPage() {
                                 key={status}
                                 onClick={() => setFilterStatus(status)}
                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filterStatus === status
-                                        ? 'bg-primary-500 text-white'
-                                        : 'bg-white text-skeu-brown hover:bg-skeu-cream'
+                                    ? 'bg-primary-500 text-white'
+                                    : 'bg-white text-skeu-brown hover:bg-skeu-cream'
                                     }`}
                             >
                                 {config.label} ({count})
@@ -353,7 +353,7 @@ export default function ApplicationsPage() {
                                                 </SkeuButton>
                                             </Link>
                                             <a href={application.job.source_url} target="_blank" rel="noopener noreferrer">
-                                                <SkeuButton variant="ghost" size="sm">
+                                                <SkeuButton variant="secondary" size="sm">
                                                     <ExternalLink className="w-4 h-4" />
                                                 </SkeuButton>
                                             </a>
