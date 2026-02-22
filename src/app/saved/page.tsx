@@ -4,16 +4,17 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-    Bookmark, Search, MapPin, Clock, Building2, DollarSign,
-    Calendar, ExternalLink, Trash2, Filter, X, Menu, Bell, User, Award, Briefcase
+    Bookmark, Search, Bell, User, Award, Briefcase,
+    Menu, X, MapPin, DollarSign, Clock, ExternalLink,
+    Trash2, Filter
 } from 'lucide-react';
 import { SkeuButton, SkeuCard, SkeuBadge } from '@/components/ui/skeuomorphic';
-import { useJobsStore, useAuthStore, useUIStore } from '@/store';
+import { useAuthStore, useUIStore, useJobsStore } from '@/store';
 import { Job } from '@/types/database';
 import { formatSalary, formatDate } from '@/lib/utils';
 
 // Sample saved jobs for demo
-const sampleSavedJobs: (Job & { saved_at: string })[] = [
+const sampleSavedJobs: Job[] = [
     {
         id: '1',
         title: 'Senior Software Engineer',
@@ -24,7 +25,7 @@ const sampleSavedJobs: (Job & { saved_at: string })[] = [
         salary_currency: 'BDT',
         salary_period: 'monthly',
         job_type: 'full-time',
-        description: 'We are looking for an experienced software engineer to join our growing team.',
+        description: 'We are looking for an experienced software engineer.',
         requirements: ['5+ years experience', 'React/Node.js'],
         benefits: ['Health insurance', 'Flexible hours'],
         skills_required: ['JavaScript', 'React', 'Node.js'],
@@ -38,13 +39,39 @@ const sampleSavedJobs: (Job & { saved_at: string })[] = [
         is_remote: true,
         is_hybrid: false,
         is_fraud: false,
-        saved_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
     },
     {
         id: '2',
-        title: 'Marketing Manager',
+        title: 'Product Manager',
+        company: 'StartupXYZ',
+        location: 'Dhaka',
+        salary_min: 100000,
+        salary_max: 180000,
+        salary_currency: 'BDT',
+        salary_period: 'monthly',
+        job_type: 'full-time',
+        description: 'Lead product development initiatives.',
+        requirements: ['3+ years PM experience', 'Agile methodology'],
+        benefits: ['Stock options', 'Remote work'],
+        skills_required: ['Product Management', 'Agile', 'Data Analysis'],
+        skills_preferred: ['Figma', 'SQL'],
+        post_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        source_name: 'LinkedIn',
+        source_url: 'https://linkedin.com/jobs/2',
+        category: 'Product',
+        industry: 'Technology',
+        experience_level: 'mid',
+        is_remote: false,
+        is_hybrid: true,
+        is_fraud: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+    },
+    {
+        id: '3',
+        title: 'UI/UX Designer',
         company: 'Creative Agency',
         location: 'Chittagong',
         salary_min: 50000,
@@ -52,21 +79,20 @@ const sampleSavedJobs: (Job & { saved_at: string })[] = [
         salary_currency: 'BDT',
         salary_period: 'monthly',
         job_type: 'full-time',
-        description: 'Lead our marketing team to develop innovative strategies.',
-        requirements: ['3+ years marketing experience'],
-        benefits: ['Performance bonus'],
-        skills_required: ['Digital Marketing', 'SEO'],
-        skills_preferred: ['Graphic Design'],
-        post_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        source_name: 'Prothom Alo Jobs',
-        source_url: 'https://jobs.prothomalo.com/job/2',
-        category: 'Marketing',
-        industry: 'Advertising',
+        description: 'Design beautiful user interfaces.',
+        requirements: ['2+ years design experience', 'Figma proficiency'],
+        benefits: ['Creative environment', 'Learning budget'],
+        skills_required: ['Figma', 'UI Design', 'UX Research'],
+        skills_preferred: ['Animation', 'Prototyping'],
+        post_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        source_name: 'Prothom Alo',
+        source_url: 'https://prothomalo.com/jobs/3',
+        category: 'Design',
+        industry: 'Creative',
         experience_level: 'mid',
         is_remote: false,
-        is_hybrid: true,
+        is_hybrid: false,
         is_fraud: false,
-        saved_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
     },
@@ -74,28 +100,30 @@ const sampleSavedJobs: (Job & { saved_at: string })[] = [
 
 export default function SavedJobsPage() {
     const router = useRouter();
-    const { savedJobs, setSavedJobs, removeSavedJob } = useJobsStore();
+    const { savedJobs: savedJobIds, toggleSaveJob, jobs } = useJobsStore();
     const { user } = useAuthStore();
     const { isMenuOpen, toggleMenu } = useUIStore();
     const [isLoading, setIsLoading] = useState(true);
     const [filterSource, setFilterSource] = useState<string>('all');
+    const [savedJobsList, setSavedJobsList] = useState<Job[]>([]);
 
     useEffect(() => {
         // Simulate loading saved jobs
         setTimeout(() => {
-            setSavedJobs(sampleSavedJobs);
+            setSavedJobsList(sampleSavedJobs);
             setIsLoading(false);
         }, 500);
-    }, [setSavedJobs]);
+    }, []);
 
     const filteredJobs = filterSource === 'all'
-        ? savedJobs
-        : savedJobs.filter(job => job.source_name === filterSource);
+        ? savedJobsList
+        : savedJobsList.filter(job => job.source_name === filterSource);
 
-    const sources = ['all', ...new Set(savedJobs.map(job => job.source_name))];
+    const sources = ['all', ...Array.from(new Set(savedJobsList.map(job => job.source_name)))];
 
     const handleRemoveJob = (jobId: string) => {
-        removeSavedJob(jobId);
+        setSavedJobsList(prev => prev.filter(job => job.id !== jobId));
+        toggleSaveJob(jobId);
     };
 
     return (
@@ -116,7 +144,7 @@ export default function SavedJobsPage() {
                                 <Search className="w-4 h-4" />
                                 <span>Search</span>
                             </Link>
-                            <Link href="/saved" className="nav-item active">
+                            <Link href="/saved" className="nav-item-active">
                                 <Bookmark className="w-4 h-4" />
                                 <span>Saved</span>
                             </Link>
@@ -133,7 +161,6 @@ export default function SavedJobsPage() {
                         <div className="flex items-center gap-2">
                             <Link href="/notifications" className="p-2 rounded-lg hover:bg-skeu-cream transition-colors relative">
                                 <Bell className="w-5 h-5 text-skeu-brown" />
-                                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                             </Link>
                             <Link href="/profile" className="hidden md:flex">
                                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-skeu-tan to-skeu-brown flex items-center justify-center text-white font-semibold shadow-skeu-raised">
@@ -153,7 +180,7 @@ export default function SavedJobsPage() {
                                 <Search className="w-4 h-4" />
                                 <span>Search</span>
                             </Link>
-                            <Link href="/saved" className="nav-item active" onClick={() => toggleMenu()}>
+                            <Link href="/saved" className="nav-item" onClick={() => toggleMenu()}>
                                 <Bookmark className="w-4 h-4" />
                                 <span>Saved</span>
                             </Link>
@@ -180,64 +207,70 @@ export default function SavedJobsPage() {
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h1 className="text-2xl font-display font-bold text-skeu-dark">Saved Jobs</h1>
-                        <p className="text-skeu-brown mt-1">{savedJobs.length} jobs saved</p>
+                        <p className="text-skeu-brown mt-1">{savedJobsList.length} jobs saved</p>
                     </div>
+                </div>
 
-                    {/* Filter */}
-                    <div className="flex items-center gap-2">
-                        <Filter className="w-4 h-4 text-skeu-brown" />
-                        <select
-                            value={filterSource}
-                            onChange={(e) => setFilterSource(e.target.value)}
-                            className="px-3 py-2 rounded-lg border border-skeu-tan/30 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                {/* Source Filter */}
+                <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
+                    <Filter className="w-5 h-5 text-skeu-brown flex-shrink-0" />
+                    {sources.map((source) => (
+                        <button
+                            key={source}
+                            onClick={() => setFilterSource(source)}
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${filterSource === source
+                                ? 'bg-primary-500 text-white shadow-skeu-pressed'
+                                : 'bg-white text-skeu-brown border border-skeu-tan/30 hover:border-primary-300'
+                                }`}
                         >
-                            {sources.map(source => (
-                                <option key={source} value={source}>
-                                    {source === 'all' ? 'All Sources' : source}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                            {source === 'all' ? 'All Sources' : source}
+                        </button>
+                    ))}
                 </div>
 
                 {/* Jobs List */}
                 {isLoading ? (
                     <div className="space-y-4">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="animate-pulse">
-                                <div className="bg-white rounded-2xl p-6 shadow-skeu-raised">
-                                    <div className="h-6 bg-skeu-cream rounded w-1/3 mb-4"></div>
-                                    <div className="h-4 bg-skeu-cream rounded w-1/2 mb-2"></div>
-                                    <div className="h-4 bg-skeu-cream rounded w-1/4"></div>
-                                </div>
-                            </div>
+                        {[1, 2, 3].map((i) => (
+                            <SkeuCard key={i} className="animate-pulse">
+                                <div className="h-6 bg-skeu-cream rounded w-1/3 mb-4"></div>
+                                <div className="h-4 bg-skeu-cream rounded w-1/2 mb-2"></div>
+                                <div className="h-4 bg-skeu-cream rounded w-1/4"></div>
+                            </SkeuCard>
                         ))}
                     </div>
                 ) : filteredJobs.length === 0 ? (
-                    <div className="text-center py-12">
+                    <SkeuCard className="text-center py-12">
                         <Bookmark className="w-16 h-16 text-skeu-tan mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-skeu-dark mb-2">No Saved Jobs</h3>
-                        <p className="text-skeu-brown mb-4">Start saving jobs to view them here</p>
+                        <h3 className="text-lg font-semibold text-skeu-dark mb-2">No saved jobs</h3>
+                        <p className="text-skeu-brown mb-4">Start saving jobs to see them here</p>
                         <Link href="/">
                             <SkeuButton>Browse Jobs</SkeuButton>
                         </Link>
-                    </div>
+                    </SkeuCard>
                 ) : (
                     <div className="space-y-4">
                         {filteredJobs.map((job) => (
                             <SkeuCard key={job.id} className="hover:shadow-lg transition-shadow">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                                     <div className="flex-1">
-                                        <Link href={`/jobs/${job.id}`}>
-                                            <h3 className="text-lg font-semibold text-skeu-dark hover:text-primary-600 transition-colors">
-                                                {job.title}
-                                            </h3>
-                                        </Link>
-                                        <Link href={`/companies/${encodeURIComponent(job.company)}`} className="text-primary-600 hover:underline">
-                                            {job.company}
-                                        </Link>
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <Link href={`/jobs/${job.id}`}>
+                                                    <h3 className="text-lg font-semibold text-skeu-dark hover:text-primary-600 transition-colors">
+                                                        {job.title}
+                                                    </h3>
+                                                </Link>
+                                                <Link href={`/companies/${encodeURIComponent(job.company)}`}>
+                                                    <p className="text-skeu-brown hover:text-primary-600 transition-colors">
+                                                        {job.company}
+                                                    </p>
+                                                </Link>
+                                            </div>
+                                            <SkeuBadge variant="default">{job.source_name}</SkeuBadge>
+                                        </div>
 
-                                        <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-skeu-brown">
+                                        <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-skeu-brown">
                                             <span className="flex items-center gap-1">
                                                 <MapPin className="w-4 h-4" />
                                                 {job.location}
@@ -252,12 +285,25 @@ export default function SavedJobsPage() {
                                             </span>
                                         </div>
 
-                                        <div className="flex items-center gap-2 mt-3">
-                                            <SkeuBadge variant="secondary">{job.source_name}</SkeuBadge>
-                                            <span className="text-xs text-skeu-brown">
-                                                Saved {formatDate(job.saved_at)}
-                                            </span>
+                                        <div className="flex flex-wrap gap-2 mt-3">
+                                            {job.skills_required?.slice(0, 3).map((skill, index) => (
+                                                <span
+                                                    key={index}
+                                                    className="px-2 py-1 bg-skeu-cream rounded text-xs text-skeu-brown"
+                                                >
+                                                    {skill}
+                                                </span>
+                                            ))}
+                                            {job.skills_required && job.skills_required.length > 3 && (
+                                                <span className="px-2 py-1 bg-skeu-cream rounded text-xs text-skeu-brown">
+                                                    +{job.skills_required.length - 3} more
+                                                </span>
+                                            )}
                                         </div>
+
+                                        <p className="text-xs text-skeu-brown mt-3">
+                                            Posted {formatDate(job.post_date)}
+                                        </p>
                                     </div>
 
                                     <div className="flex items-center gap-2">
@@ -267,16 +313,18 @@ export default function SavedJobsPage() {
                                             </SkeuButton>
                                         </Link>
                                         <a href={job.source_url} target="_blank" rel="noopener noreferrer">
-                                            <SkeuButton variant="ghost" size="sm">
+                                            <SkeuButton variant="secondary" size="sm">
                                                 <ExternalLink className="w-4 h-4" />
                                             </SkeuButton>
                                         </a>
-                                        <button
+                                        <SkeuButton
+                                            variant="secondary"
+                                            size="sm"
                                             onClick={() => handleRemoveJob(job.id)}
-                                            className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                                            className="text-red-500"
                                         >
                                             <Trash2 className="w-4 h-4" />
-                                        </button>
+                                        </SkeuButton>
                                     </div>
                                 </div>
                             </SkeuCard>
