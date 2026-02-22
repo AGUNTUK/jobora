@@ -95,7 +95,7 @@ const sampleJobs: Job[] = [
         source_url: 'https://linkedin.com/jobs/4',
         category: 'Technology',
         industry: 'Software',
-        experience_level: 'junior',
+        experience_level: 'entry',
         is_remote: false,
         is_hybrid: true,
         is_fraud: false,
@@ -312,7 +312,7 @@ export default function CompanyProfilePage() {
                                     <h2 className="text-lg font-semibold text-skeu-dark mb-4">Benefits & Perks</h2>
                                     <div className="flex flex-wrap gap-2">
                                         {company.benefits.map((benefit, index) => (
-                                            <SkeuBadge key={index} variant="secondary">{benefit}</SkeuBadge>
+                                            <SkeuBadge key={index} variant="default">{benefit}</SkeuBadge>
                                         ))}
                                     </div>
                                 </SkeuCard>
