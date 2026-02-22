@@ -154,6 +154,9 @@ export default function HomePage() {
     const [selectedLocation, setSelectedLocation] = useState('');
     const [selectedJobType, setSelectedJobType] = useState('');
     const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
+    const [sortBy, setSortBy] = useState<'relevance' | 'date' | 'salary'>('relevance');
+    const [displayCount, setDisplayCount] = useState(6);
+    const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
     // Load jobs on mount
     useEffect(() => {
@@ -187,8 +190,22 @@ export default function HomePage() {
             );
         }
 
+        // Sort results
+        result = [...result].sort((a, b) => {
+            switch (sortBy) {
+                case 'date':
+                    return new Date(b.post_date).getTime() - new Date(a.post_date).getTime();
+                case 'salary':
+                    return (b.salary_max || 0) - (a.salary_max || 0);
+                case 'relevance':
+                default:
+                    return (b.relevance_score || 0) - (a.relevance_score || 0);
+            }
+        });
+
         setFilteredJobs(result);
-    }, [jobs, searchQuery, selectedLocation, selectedJobType]);
+        setDisplayCount(6); // Reset display count when filters change
+    }, [jobs, searchQuery, selectedLocation, selectedJobType, sortBy]);
 
     // Debounced search handler
     const debouncedSearch = useDebouncedCallback((query: string) => {
@@ -210,6 +227,25 @@ export default function HomePage() {
         await new Promise(resolve => setTimeout(resolve, 500));
         setIsLoading(false);
     }, [searchQuery]);
+
+    // Load more jobs handler
+    const handleLoadMore = useCallback(() => {
+        setDisplayCount(prev => prev + 6);
+    }, []);
+
+    // Check for unread notifications (in production, this would come from API/store)
+    useEffect(() => {
+        // For demo, randomly set notifications
+        const checkNotifications = () => {
+            setHasUnreadNotifications(Math.random() > 0.5);
+        };
+        checkNotifications();
+    }, []);
+
+    // Get jobs to display
+    const jobsToDisplay = filteredJobs.length > 0 ? filteredJobs : jobs;
+    const displayedJobs = jobsToDisplay.slice(0, displayCount);
+    const hasMoreJobs = displayCount < jobsToDisplay.length;
 
     const locations = ['Dhaka', 'Chittagong', 'Sylhet', 'Rajshahi', 'Khulna', 'Remote'];
     const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance'];
@@ -259,10 +295,12 @@ export default function HomePage() {
 
                             {/* Right Actions */}
                             <div className="flex items-center gap-2">
-                                <button className="relative p-2 rounded-lg hover:bg-skeu-cream transition-colors">
+                                <Link href="/notifications" className="relative p-2 rounded-lg hover:bg-skeu-cream transition-colors">
                                     <Bell className="w-5 h-5 text-skeu-brown" />
-                                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                                </button>
+                                    {hasUnreadNotifications && (
+                                        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                                    )}
+                                </Link>
                                 <Link href="/profile" className="hidden md:flex">
                                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-skeu-tan to-skeu-brown flex items-center justify-center text-white font-semibold shadow-skeu-raised">
                                         U
@@ -324,7 +362,7 @@ export default function HomePage() {
                                     <SkeuInput
                                         placeholder="Job title, company, or keywords"
                                         value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        onChange={handleSearchChange}
                                         icon={<Search className="w-5 h-5" />}
                                     />
                                 </div>
@@ -396,7 +434,11 @@ export default function HomePage() {
                             </h2>
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-skeu-brown">Sort by:</span>
-                                <select className="skeu-input py-1 px-3 text-sm">
+                                <select
+                                    className="skeu-input py-1 px-3 text-sm"
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value as 'relevance' | 'date' | 'salary')}
+                                >
                                     <option value="relevance">Relevance</option>
                                     <option value="date">Most Recent</option>
                                     <option value="salary">Salary</option>
@@ -405,24 +447,46 @@ export default function HomePage() {
                         </div>
 
                         {/* Job Cards */}
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {(filteredJobs.length > 0 ? filteredJobs : jobs).map((job) => (
-                                <JobCard
-                                    key={job.id}
-                                    job={job}
-                                    isSaved={savedJobs.includes(job.id)}
-                                    onToggleSave={() => toggleSaveJob(job.id)}
-                                />
-                            ))}
-                        </div>
+                        {displayedJobs.length > 0 ? (
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {displayedJobs.map((job) => (
+                                    <JobCard
+                                        key={job.id}
+                                        job={job}
+                                        isSaved={savedJobs.includes(job.id)}
+                                        onToggleSave={() => toggleSaveJob(job.id)}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12">
+                                <div className="w-16 h-16 mx-auto rounded-full bg-skeu-cream flex items-center justify-center mb-4">
+                                    <Search className="w-8 h-8 text-skeu-brown" />
+                                </div>
+                                <h3 className="text-lg font-bold text-skeu-dark mb-2">No jobs found</h3>
+                                <p className="text-skeu-brown mb-4">Try adjusting your search or filters</p>
+                                <SkeuButton
+                                    variant="secondary"
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setSelectedLocation('');
+                                        setSelectedJobType('');
+                                    }}
+                                >
+                                    Clear Filters
+                                </SkeuButton>
+                            </div>
+                        )}
 
                         {/* Load More */}
-                        <div className="text-center mt-8">
-                            <SkeuButton variant="secondary" size="lg">
-                                Load More Jobs
-                                <ChevronRight className="w-5 h-5 ml-2" />
-                            </SkeuButton>
-                        </div>
+                        {hasMoreJobs && (
+                            <div className="text-center mt-8">
+                                <SkeuButton variant="secondary" size="lg" onClick={handleLoadMore}>
+                                    Load More Jobs
+                                    <ChevronRight className="w-5 h-5 ml-2" />
+                                </SkeuButton>
+                            </div>
+                        )}
                     </div>
                 </section>
 
