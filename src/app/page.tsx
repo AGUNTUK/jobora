@@ -406,7 +406,7 @@ export default function HomePage() {
 
                         {/* Job Cards */}
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {jobs.map((job) => (
+                            {(filteredJobs.length > 0 ? filteredJobs : jobs).map((job) => (
                                 <JobCard
                                     key={job.id}
                                     job={job}
