@@ -4,10 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
     User, Mail, Phone, MapPin, Briefcase, GraduationCap,
-    Settings, LogOut, Edit2, Award, TrendingUp, Calendar,
-    FileText, Bell, Shield, ChevronRight, Plus, X, Save
+    Settings, LogOut, Edit2, Award, Calendar,
+    FileText, Plus, Save
 } from 'lucide-react';
-import { SkeuButton, SkeuCard, SkeuInput, SkeuTextarea, SkeuBadge, SkeuProgress, SkeuAvatar } from '@/components/ui/skeuomorphic';
+import { SkeuButton, SkeuCard, SkeuInput, SkeuProgress, SkeuAvatar } from '@/components/ui/skeuomorphic';
+import { MainLayout } from '@/components/layout';
 import { useAuthStore } from '@/store';
 import { calculateLevel } from '@/lib/utils';
 
@@ -81,21 +82,7 @@ export default function ProfilePage() {
     ];
 
     return (
-        <div className="min-h-screen pb-20 md:pb-8">
-            {/* Header */}
-            <header className="header sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto px-4 py-3">
-                    <div className="flex items-center justify-between">
-                        <h1 className="text-xl font-bold text-skeu-dark">Profile</h1>
-                        <div className="flex items-center gap-2">
-                            <Link href="/settings" className="p-2 rounded-lg hover:bg-skeu-cream transition-colors">
-                                <Settings className="w-5 h-5 text-skeu-brown" />
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
+        <MainLayout showNavigation={false}>
             <main className="max-w-4xl mx-auto px-4 py-6">
                 {/* Profile Header Card */}
                 <SkeuCard variant="raised" className="mb-6">
@@ -187,8 +174,8 @@ export default function ProfilePage() {
                         <button
                             key={tab.id}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${activeTab === tab.id
-                                    ? 'bg-gradient-to-b from-white to-skeu-light text-skeu-dark shadow-skeu-raised'
-                                    : 'text-skeu-brown hover:bg-skeu-cream'
+                                ? 'bg-gradient-to-b from-white to-skeu-light text-skeu-dark shadow-skeu-raised'
+                                : 'text-skeu-brown hover:bg-skeu-cream'
                                 }`}
                             onClick={() => setActiveTab(tab.id)}
                         >
@@ -377,8 +364,8 @@ export default function ProfilePage() {
                                             <button
                                                 key={type}
                                                 className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-all ${mockUser.job_types.includes(type.toLowerCase())
-                                                        ? 'bg-primary-500 text-white'
-                                                        : 'bg-skeu-cream text-skeu-brown hover:bg-skeu-tan'
+                                                    ? 'bg-primary-500 text-white'
+                                                    : 'bg-skeu-cream text-skeu-brown hover:bg-skeu-tan'
                                                     }`}
                                             >
                                                 {type}
@@ -433,6 +420,6 @@ export default function ProfilePage() {
                     </SkeuButton>
                 </div>
             </main>
-        </div>
+        </MainLayout>
     );
 }
