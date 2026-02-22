@@ -139,10 +139,9 @@ export function showLocalNotification(payload: NotificationPayload): void {
                 body: payload.body,
                 icon: payload.icon || '/icons/icon-192x192.png',
                 badge: payload.badge || '/icons/badge.png',
-                image: payload.image,
                 data: payload.data,
                 actions: payload.actions,
-            });
+            } as NotificationOptions);
         });
     }
 }
