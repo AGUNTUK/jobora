@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { Job, ApiResponse, PaginatedResponse } from '@/types/database';
-import { collection, query, where, orderBy, limit, startAfter, getDocs, addDoc, Timestamp, QueryConstraint, DocumentSnapshot, DocumentData } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // GET /api/jobs - Fetch jobs with filters and pagination
 export async function GET(request: NextRequest) {
@@ -13,56 +13,53 @@ export async function GET(request: NextRequest) {
         const page = parseInt(searchParams.get('page') || '1');
         const perPage = parseInt(searchParams.get('per_page') || '20');
 
-        // Build query constraints
-        const constraints: QueryConstraint[] = [];
-        constraints.push(where('is_fraud', '==', false));
+        // Build query
+        let query = db.collection('jobs').where('is_fraud', '==', false);
 
         // Apply filters
         const keywords = searchParams.get('keywords');
         if (keywords) {
-            // Note: Firestore doesn't support OR queries across fields easily
-            // For production, consider using Algolia or similar for full-text search
-            constraints.push(where('keywords', 'array-contains', keywords.toLowerCase()));
+            query = query.where('keywords', 'array-contains', keywords.toLowerCase());
         }
 
         const location = searchParams.get('location');
         if (location) {
-            constraints.push(where('location', '==', location));
+            query = query.where('location', '==', location);
         }
 
         const jobType = searchParams.get('job_type');
         if (jobType) {
-            constraints.push(where('job_type', 'in', jobType.split(',')));
+            query = query.where('job_type', 'in', jobType.split(','));
         }
 
         const category = searchParams.get('category');
         if (category) {
-            constraints.push(where('category', '==', category));
+            query = query.where('category', '==', category);
         }
 
         const experienceLevel = searchParams.get('experience_level');
         if (experienceLevel) {
-            constraints.push(where('experience_level', 'in', experienceLevel.split(',')));
+            query = query.where('experience_level', 'in', experienceLevel.split(','));
         }
 
         const salaryMin = searchParams.get('salary_min');
         if (salaryMin) {
-            constraints.push(where('salary_max', '>=', parseInt(salaryMin)));
+            query = query.where('salary_max', '>=', parseInt(salaryMin));
         }
 
         const salaryMax = searchParams.get('salary_max');
         if (salaryMax) {
-            constraints.push(where('salary_min', '<=', parseInt(salaryMax)));
+            query = query.where('salary_min', '<=', parseInt(salaryMax));
         }
 
         const isRemote = searchParams.get('is_remote');
         if (isRemote === 'true') {
-            constraints.push(where('is_remote', '==', true));
+            query = query.where('is_remote', '==', true);
         }
 
         const source = searchParams.get('source');
         if (source) {
-            constraints.push(where('source_name', 'in', source.split(',')));
+            query = query.where('source_name', 'in', source.split(','));
         }
 
         // Sorting
@@ -70,24 +67,21 @@ export async function GET(request: NextRequest) {
         const sortOrder = searchParams.get('sort_order') || 'desc';
 
         if (sortBy === 'relevance') {
-            constraints.push(orderBy('relevance_score', sortOrder === 'asc' ? 'asc' : 'desc'));
+            query = query.orderBy('relevance_score', sortOrder === 'asc' ? 'asc' : 'desc');
         } else if (sortBy === 'salary') {
-            constraints.push(orderBy('salary_max', sortOrder === 'asc' ? 'asc' : 'desc'));
+            query = query.orderBy('salary_max', sortOrder === 'asc' ? 'asc' : 'desc');
         } else {
-            constraints.push(orderBy('post_date', sortOrder === 'asc' ? 'asc' : 'desc'));
+            query = query.orderBy('post_date', sortOrder === 'asc' ? 'asc' : 'desc');
         }
 
         // Apply pagination limit
-        constraints.push(limit(perPage));
+        query = query.limit(perPage);
 
         // Execute query
-        const jobsRef = collection(db, 'jobs');
-        const q = query(jobsRef, ...constraints);
-        const snapshot = await getDocs(q);
+        const snapshot = await query.get();
 
         // Get total count (separate query for counting)
-        const countQuery = query(jobsRef, where('is_fraud', '==', false));
-        const countSnapshot = await getDocs(countQuery);
+        const countSnapshot = await db.collection('jobs').where('is_fraud', '==', false).get();
         const total = countSnapshot.size;
 
         // Transform documents
@@ -132,7 +126,7 @@ export async function POST(request: NextRequest) {
             updated_at: now,
         };
 
-        const docRef = await addDoc(collection(db, 'jobs'), jobData);
+        const docRef = await db.collection('jobs').add(jobData);
 
         const job: Job = {
             id: docRef.id,

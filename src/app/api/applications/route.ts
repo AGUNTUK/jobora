@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { AppliedJob, ApiResponse, PaginatedResponse } from '@/types/database';
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, limit, startAfter, Timestamp, QueryConstraint } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // GET /api/applications - Fetch user's job applications
 export async function GET(request: NextRequest) {
@@ -21,28 +21,21 @@ export async function GET(request: NextRequest) {
         const perPage = parseInt(searchParams.get('per_page') || '20');
         const status = searchParams.get('status');
 
-        // Build query constraints
-        const constraints: QueryConstraint[] = [
-            where('user_id', '==', userId),
-            orderBy('created_at', 'desc'),
-            limit(perPage),
-        ];
+        // Build query
+        let query = db.collection('applied_jobs').where('user_id', '==', userId);
 
         if (status) {
-            constraints.splice(1, 0, where('status', '==', status));
+            query = query.where('status', '==', status);
         }
 
-        const applicationsRef = collection(db, 'applied_jobs');
-        const q = query(applicationsRef, ...constraints);
-        const snapshot = await getDocs(q);
+        const snapshot = await query.orderBy('created_at', 'desc').limit(perPage).get();
 
         // Get total count
-        const countConstraints: QueryConstraint[] = [where('user_id', '==', userId)];
+        let countQuery = db.collection('applied_jobs').where('user_id', '==', userId);
         if (status) {
-            countConstraints.push(where('status', '==', status));
+            countQuery = countQuery.where('status', '==', status);
         }
-        const countQuery = query(applicationsRef, ...countConstraints);
-        const countSnapshot = await getDocs(countQuery);
+        const countSnapshot = await countQuery.get();
         const total = countSnapshot.size;
 
         // Transform documents
@@ -91,12 +84,11 @@ export async function POST(request: NextRequest) {
         const { job_id, status = 'saved', notes } = body;
 
         // Check if already applied
-        const existingQuery = query(
-            collection(db, 'applied_jobs'),
-            where('user_id', '==', userId),
-            where('job_id', '==', job_id)
-        );
-        const existingSnapshot = await getDocs(existingQuery);
+        const existingSnapshot = await db
+            .collection('applied_jobs')
+            .where('user_id', '==', userId)
+            .where('job_id', '==', job_id)
+            .get();
 
         if (!existingSnapshot.empty) {
             return NextResponse.json<ApiResponse<null>>(
@@ -116,16 +108,16 @@ export async function POST(request: NextRequest) {
             updated_at: now,
         };
 
-        const docRef = await addDoc(collection(db, 'applied_jobs'), applicationData);
+        const docRef = await db.collection('applied_jobs').add(applicationData);
 
         // Add gamification points if applied
         if (status === 'applied') {
-            const gamificationRef = doc(db, 'gamification', userId);
-            const gamificationSnap = await getDoc(gamificationRef);
+            const gamificationRef = db.collection('gamification').doc(userId);
+            const gamificationSnap = await gamificationRef.get();
 
             if (gamificationSnap.exists) {
                 const currentPoints = gamificationSnap.data()?.total_points || 0;
-                await updateDoc(gamificationRef, {
+                await gamificationRef.update({
                     total_points: currentPoints + 10,
                     updated_at: now,
                 });
@@ -135,7 +127,7 @@ export async function POST(request: NextRequest) {
         const application: AppliedJob = {
             id: docRef.id,
             ...applicationData,
-            applied_at: applicationData.applied_at?.toDate?.()?.toISOString() || null,
+            applied_at: applicationData.applied_at?.toDate?.()?.toISOString() || undefined,
             created_at: now.toDate().toISOString(),
             updated_at: now.toDate().toISOString(),
         };
@@ -169,8 +161,8 @@ export async function PUT(request: NextRequest) {
         const body = await request.json();
         const { id, status, notes, reminder_date } = body;
 
-        const docRef = doc(db, 'applied_jobs', id);
-        const docSnap = await getDoc(docRef);
+        const docRef = db.collection('applied_jobs').doc(id);
+        const docSnap = await docRef.get();
 
         if (!docSnap.exists) {
             return NextResponse.json<ApiResponse<null>>(
@@ -200,9 +192,9 @@ export async function PUT(request: NextRequest) {
         if (notes !== undefined) updateData.notes = notes;
         if (reminder_date !== undefined) updateData.reminder_date = reminder_date;
 
-        await updateDoc(docRef, updateData);
+        await docRef.update(updateData);
 
-        const updatedSnap = await getDoc(docRef);
+        const updatedSnap = await docRef.get();
         const data = updatedSnap.data()!;
         const application: AppliedJob = {
             id: updatedSnap.id,
@@ -247,8 +239,8 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        const docRef = doc(db, 'applied_jobs', id);
-        const docSnap = await getDoc(docRef);
+        const docRef = db.collection('applied_jobs').doc(id);
+        const docSnap = await docRef.get();
 
         if (!docSnap.exists) {
             return NextResponse.json<ApiResponse<null>>(
@@ -265,7 +257,7 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        await deleteDoc(docRef);
+        await docRef.delete();
 
         return NextResponse.json<ApiResponse<null>>(
             { success: true, message: 'Application deleted successfully' }

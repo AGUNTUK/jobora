@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { Job, ApiResponse } from '@/types/database';
-import { collection, doc, getDoc, updateDoc, deleteDoc, Timestamp, addDoc } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // GET /api/jobs/[id] - Fetch a single job
 export async function GET(
@@ -12,8 +12,8 @@ export async function GET(
         const db = getAdminDb();
         const { id } = params;
 
-        const docRef = doc(db, 'jobs', id);
-        const docSnap = await getDoc(docRef);
+        const docRef = db.collection('jobs').doc(id);
+        const docSnap = await docRef.get();
 
         if (!docSnap.exists) {
             return NextResponse.json<ApiResponse<null>>(
@@ -26,15 +26,15 @@ export async function GET(
         const job: Job = {
             id: docSnap.id,
             ...data,
-            post_date: data.post_date?.toDate?.()?.toISOString() || data.post_date,
-            created_at: data.created_at?.toDate?.()?.toISOString() || data.created_at,
-            updated_at: data.updated_at?.toDate?.()?.toISOString() || data.updated_at,
+            post_date: data?.post_date?.toDate?.()?.toISOString() || data?.post_date,
+            created_at: data?.created_at?.toDate?.()?.toISOString() || data?.created_at,
+            updated_at: data?.updated_at?.toDate?.()?.toISOString() || data?.updated_at,
         } as Job;
 
         // Record job view (async, don't wait)
         const userId = request.headers.get('x-user-id');
         if (userId) {
-            addDoc(collection(db, 'job_views'), {
+            db.collection('job_views').add({
                 job_id: id,
                 user_id: userId,
                 viewed_at: Timestamp.now(),
@@ -63,8 +63,8 @@ export async function PUT(
         const { id } = params;
         const body = await request.json();
 
-        const docRef = doc(db, 'jobs', id);
-        const docSnap = await getDoc(docRef);
+        const docRef = db.collection('jobs').doc(id);
+        const docSnap = await docRef.get();
 
         if (!docSnap.exists) {
             return NextResponse.json<ApiResponse<null>>(
@@ -73,19 +73,21 @@ export async function PUT(
             );
         }
 
-        await updateDoc(docRef, {
+        const updateData = {
             ...body,
             updated_at: Timestamp.now(),
-        });
+        };
 
-        const updatedSnap = await getDoc(docRef);
-        const data = updatedSnap.data()!;
+        await docRef.update(updateData);
+
+        const updatedSnap = await docRef.get();
+        const data = updatedSnap.data();
         const job: Job = {
             id: updatedSnap.id,
             ...data,
-            post_date: data.post_date?.toDate?.()?.toISOString() || data.post_date,
-            created_at: data.created_at?.toDate?.()?.toISOString() || data.created_at,
-            updated_at: data.updated_at?.toDate?.()?.toISOString() || data.updated_at,
+            post_date: data?.post_date?.toDate?.()?.toISOString() || data?.post_date,
+            created_at: data?.created_at?.toDate?.()?.toISOString() || data?.created_at,
+            updated_at: data?.updated_at?.toDate?.()?.toISOString() || data?.updated_at,
         } as Job;
 
         return NextResponse.json<ApiResponse<Job>>(
@@ -109,8 +111,8 @@ export async function DELETE(
         const db = getAdminDb();
         const { id } = params;
 
-        const docRef = doc(db, 'jobs', id);
-        const docSnap = await getDoc(docRef);
+        const docRef = db.collection('jobs').doc(id);
+        const docSnap = await docRef.get();
 
         if (!docSnap.exists) {
             return NextResponse.json<ApiResponse<null>>(
@@ -119,7 +121,7 @@ export async function DELETE(
             );
         }
 
-        await deleteDoc(docRef);
+        await docRef.delete();
 
         return NextResponse.json<ApiResponse<null>>(
             { success: true, message: 'Job deleted successfully' }
