@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - Jobora</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f0e8 0%, #e8e0d5 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+            max-width: 400px;
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .logo span {
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+        }
+        h1 {
+            font-size: 24px;
+            color: #2d2a26;
+            margin-bottom: 12px;
+        }
+        p {
+            color: #6b635b;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+        .icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 24px;
+            opacity: 0.5;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .tips {
+            margin-top: 32px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            text-align: left;
+        }
+        .tips h3 {
+            font-size: 14px;
+            color: #2d2a26;
+            margin-bottom: 8px;
+        }
+        .tips ul {
+            list-style: none;
+            font-size: 13px;
+            color: #6b635b;
+        }
+        .tips li {
+            padding: 4px 0;
+            padding-left: 16px;
+            position: relative;
+        }
+        .tips li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <span>J</span>
+        </div>
+        
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18.364 5.636a9 9 0 010 12.728M5.636 18.364a9 9 0 010-12.728" stroke="#6b635b"/>
+            <path d="M15.536 8.464a5 5 0 010 7.072M8.464 15.536a5 5 0 010-7.072" stroke="#6b635b"/>
+            <circle cx="12" cy="12" r="1" fill="#6b635b"/>
+        </svg>
+        
+        <h1>You're Offline</h1>
+        <p>
+            It looks like you've lost your internet connection. 
+            Don't worry, you can still browse cached jobs and your saved applications.
+        </p>
+        
+        <a href="/" class="btn" onclick="window.location.reload(); return false;">
+            Try Again
+        </a>
+        
+        <div class="tips">
+            <h3>While offline, you can:</h3>
+            <ul>
+                <li>View previously loaded jobs</li>
+                <li>Check your saved applications</li>
+                <li>Review your profile settings</li>
+                <li>Practice interview questions</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // Check if online and reload
+        window.addEventListener('online', () => {
+            window.location.reload();
+        });
+    </script>
+</body>
+</html>
