@@ -1,0 +1,394 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Skeuomorphic Design System */
+:root {
+    --skeu-light: #f5f0e8;
+    --skeu-cream: #e8e0d0;
+    --skeu-tan: #d4c4a8;
+    --skeu-brown: #8b7355;
+    --skeu-dark: #4a3728;
+    --skeu-gold: #c9a227;
+    --skeu-bronze: #cd7f32;
+    --skeu-silver: #c0c0c0;
+    --skeu-copper: #b87333;
+}
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply bg-skeu-light text-skeu-dark font-body antialiased;
+        background-image:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(0, 0, 0, 0.02) 100%),
+            url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+        min-height: 100vh;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-display;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 12px;
+        height: 12px;
+    }
+
+    ::-webkit-scrollbar-track {
+        @apply bg-skeu-cream rounded-lg;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply bg-gradient-to-b from-skeu-tan to-skeu-brown rounded-lg border-2 border-skeu-cream;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        @apply from-skeu-brown to-skeu-dark;
+    }
+}
+
+@layer components {
+
+    /* Paper texture background */
+    .paper-texture {
+        background-image:
+            linear-gradient(180deg, #faf8f5 0%, #f5f0e8 100%),
+            url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+    }
+
+    /* Leather texture */
+    .leather-texture {
+        background: linear-gradient(135deg, #8b7355 0%, #6b5344 50%, #8b7355 100%);
+        background-image:
+            linear-gradient(135deg, #8b7355 0%, #6b5344 50%, #8b7355 100%),
+            url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.1'/%3E%3C/svg%3E");
+    }
+
+    /* Metallic effects */
+    .metallic-gold {
+        background: linear-gradient(135deg, #f7e98e 0%, #c9a227 25%, #f7e98e 50%, #c9a227 75%, #f7e98e 100%);
+        background-size: 200% 200%;
+        animation: shine 3s ease-in-out infinite;
+    }
+
+    .metallic-silver {
+        background: linear-gradient(135deg, #e8e8e8 0%, #a0a0a0 25%, #e8e8e8 50%, #a0a0a0 75%, #e8e8e8 100%);
+        background-size: 200% 200%;
+        animation: shine 3s ease-in-out infinite;
+    }
+
+    .metallic-bronze {
+        background: linear-gradient(135deg, #e8a860 0%, #cd7f32 25%, #e8a860 50%, #cd7f32 75%, #e8a860 100%);
+        background-size: 200% 200%;
+        animation: shine 3s ease-in-out infinite;
+    }
+
+    /* Raised effect */
+    .skeu-raised {
+        box-shadow:
+            0 2px 4px rgba(0, 0, 0, 0.2),
+            0 4px 8px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    /* Inset effect */
+    .skeu-inset {
+        box-shadow:
+            inset 0 2px 4px rgba(0, 0, 0, 0.2),
+            inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Button styles */
+    .skeu-button {
+        @apply relative font-semibold rounded-lg transition-all duration-200 ease-out;
+        @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+        box-shadow:
+            0 4px 6px rgba(0, 0, 0, 0.3),
+            0 1px 0 rgba(255, 255, 255, 0.3) inset;
+    }
+
+    .skeu-button:hover {
+        box-shadow:
+            0 6px 10px rgba(0, 0, 0, 0.35),
+            0 1px 0 rgba(255, 255, 255, 0.3) inset;
+        transform: translateY(-1px);
+    }
+
+    .skeu-button:active {
+        transform: translateY(1px);
+        box-shadow:
+            0 2px 4px rgba(0, 0, 0, 0.3),
+            0 1px 0 rgba(255, 255, 255, 0.3) inset;
+    }
+
+    /* Card styles */
+    .skeu-card {
+        @apply rounded-xl;
+        background: linear-gradient(180deg, #ffffff 0%, #f5f0e8 100%);
+        border: 1px solid #d4c4a8;
+        box-shadow:
+            0 8px 16px rgba(0, 0, 0, 0.15),
+            0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Input styles */
+    .skeu-input {
+        @apply w-full px-4 py-2.5 rounded-lg;
+        @apply border-2 border-skeu-tan;
+        @apply text-skeu-dark placeholder-skeu-brown/50;
+        @apply focus:outline-none focus:border-skeu-brown focus:ring-2 focus:ring-skeu-brown/20;
+        @apply transition-all duration-200;
+        background: linear-gradient(180deg, #f5f0e8 0%, #e8e0d0 100%);
+        box-shadow:
+            inset 0 2px 4px rgba(0, 0, 0, 0.2),
+            inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Badge styles */
+    .skeu-badge {
+        @apply inline-flex items-center rounded-full font-semibold;
+        box-shadow:
+            0 2px 4px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    /* Navigation styles */
+    .nav-item {
+        @apply flex items-center gap-2 px-4 py-2 rounded-lg;
+        @apply text-skeu-brown font-medium;
+        @apply transition-all duration-200;
+    }
+
+    .nav-item:hover {
+        @apply bg-skeu-cream text-skeu-dark;
+    }
+
+    .nav-item.active {
+        @apply bg-gradient-to-b from-white to-skeu-light text-skeu-dark;
+        box-shadow:
+            0 2px 4px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    /* Job card specific styles */
+    .job-card {
+        @apply skeu-card p-4 cursor-pointer;
+        @apply hover:shadow-xl transition-shadow duration-200;
+    }
+
+    .job-card:hover {
+        border-color: #8b7355;
+    }
+
+    /* Loading skeleton */
+    .skeleton {
+        @apply animate-pulse bg-skeu-tan/30 rounded;
+    }
+
+    /* Toast styles */
+    .toast-container {
+        @apply fixed bottom-4 right-4 z-50 flex flex-col gap-2;
+    }
+
+    .toast {
+        @apply px-4 py-3 rounded-lg shadow-lg;
+        @apply flex items-center gap-3;
+        @apply animate-slide-in;
+        background: linear-gradient(180deg, #ffffff 0%, #f5f0e8 100%);
+        border: 1px solid #d4c4a8;
+    }
+
+    /* Animation keyframes */
+    @keyframes shine {
+        0% {
+            background-position: -200% center;
+        }
+
+        100% {
+            background-position: 200% center;
+        }
+    }
+
+    @keyframes slide-in {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes scale-in {
+        from {
+            transform: scale(0.95);
+            opacity: 0;
+        }
+
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .animate-slide-in {
+        animation: slide-in 0.3s ease-out;
+    }
+
+    .animate-fade-in {
+        animation: fade-in 0.3s ease-out;
+    }
+
+    .animate-scale-in {
+        animation: scale-in 0.2s ease-out;
+    }
+
+    /* Mobile bottom navigation */
+    .mobile-nav {
+        @apply fixed bottom-0 left-0 right-0 z-40;
+        @apply bg-gradient-to-b from-skeu-cream to-skeu-tan;
+        @apply border-t-2 border-skeu-brown;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .mobile-nav-item {
+        @apply flex flex-col items-center justify-center py-2 px-4;
+        @apply text-skeu-brown text-xs font-medium;
+        @apply transition-colors duration-200;
+    }
+
+    .mobile-nav-item.active {
+        @apply text-primary-600;
+    }
+
+    /* Header styles */
+    .header {
+        @apply sticky top-0 z-40;
+        @apply bg-gradient-to-b from-skeu-cream to-skeu-light;
+        @apply border-b-2 border-skeu-tan;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Modal/Dialog styles */
+    .modal-overlay {
+        @apply fixed inset-0 z-50;
+        @apply bg-black/50 backdrop-blur-sm;
+        @apply flex items-center justify-center p-4;
+    }
+
+    .modal-content {
+        @apply skeu-card p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto;
+        @apply animate-scale-in;
+    }
+
+    /* Gamification specific */
+    .points-display {
+        @apply inline-flex items-center gap-1 px-3 py-1 rounded-full;
+        @apply bg-gradient-to-r from-yellow-400 to-yellow-600;
+        @apply text-white font-bold text-sm;
+        box-shadow:
+            0 2px 4px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    .streak-badge {
+        @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full;
+        @apply bg-gradient-to-r from-orange-400 to-red-500;
+        @apply text-white font-bold text-xs;
+    }
+
+    .level-badge {
+        @apply inline-flex items-center justify-center w-8 h-8 rounded-full;
+        @apply bg-gradient-to-br from-purple-500 to-purple-700;
+        @apply text-white font-bold text-sm;
+        box-shadow:
+            0 2px 4px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+}
+
+@layer utilities {
+
+    /* Text shadow for embossed effect */
+    .text-embossed {
+        text-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.5),
+            0 -1px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .text-debossed {
+        text-shadow:
+            0 1px 0 rgba(0, 0, 0, 0.2),
+            0 -1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    /* Gradient text */
+    .text-gradient-gold {
+        @apply bg-clip-text text-transparent;
+        background-image: linear-gradient(135deg, #f7e98e 0%, #c9a227 50%, #f7e98e 100%);
+    }
+
+    /* Hide scrollbar but keep functionality */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Safe area padding for mobile */
+    .safe-bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .safe-top {
+        padding-top: env(safe-area-inset-top);
+    }
+}
+
+/* Print styles */
+@media print {
+    body {
+        background: white !important;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
